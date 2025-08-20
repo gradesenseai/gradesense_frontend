@@ -1,7 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'https://gradesense.up.railway.app';
-
 export default function EstimatePage() {
   const [frontFile, setFrontFile] = useState(null);
   const [backFile, setBackFile] = useState(null);
@@ -33,10 +31,11 @@ export default function EstimatePage() {
       const fd = new FormData();
       fd.append('front', frontFile);
       fd.append('back', backFile);
-      // Optional: include metadata
+      // Optionally include metadata if desired:
       // fd.append('card_meta', JSON.stringify({ year: '2022', set: 'Donruss', player: 'Joe Burrow' }));
 
-      const res = await fetch(`${API_BASE}/api/estimate`, {
+      // Use Vercel rewrite proxy to avoid CORS issues
+      const res = await fetch(`/api/estimate`, {
         method: 'POST',
         body: fd
       });
@@ -92,8 +91,18 @@ export default function EstimatePage() {
           </div>
 
           <div className="preview" style={{marginTop:8}}>
-            {frontUrl && <div><div className="label">Front preview</div><img src={frontUrl} alt="Front preview" /></div>}
-            {backUrl && <div><div className="label">Back preview</div><img src={backUrl} alt="Back preview" /></div>}
+            {frontUrl && (
+              <div>
+                <div className="label">Front preview</div>
+                <img src={frontUrl} alt="Front preview" />
+              </div>
+            )}
+            {backUrl && (
+              <div>
+                <div className="label">Back preview</div>
+                <img src={backUrl} alt="Back preview" />
+              </div>
+            )}
           </div>
 
           <div style={{display:'flex', gap:12, alignItems:'center', marginTop:12}}>
@@ -114,7 +123,11 @@ export default function EstimatePage() {
           {result && (
             <div className="grid">
               <div className="kv"><div>Request ID</div><div>{result.request_id}</div></div>
-              <div className="kv"><div>Estimated Grade</div><div style={{fontWeight:700, fontSize:24}}>{result.estimated_grade?.toFixed?.(1) ?? result.estimated_grade}</div></div>
+              <div className="kv"><div>Estimated Grade</div><div style={{fontWeight:700, fontSize:24}}>
+                {typeof result.estimated_grade === 'number'
+                  ? result.estimated_grade.toFixed(1)
+                  : result.estimated_grade}
+              </div></div>
               <div className="kv"><div>Centering</div><div>{result.subgrades?.centering}</div></div>
               <div className="kv"><div>Corners</div><div>{result.subgrades?.corners}</div></div>
               <div className="kv"><div>Edges</div><div>{result.subgrades?.edges}</div></div>
